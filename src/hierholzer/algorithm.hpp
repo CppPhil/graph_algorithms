@@ -8,17 +8,20 @@
 namespace gp {
 namespace hierholzer {
 namespace detail {
+#define GP_GRAPH_TEMPLATE          \
+    template<                      \
+        typename VertexIdentifier, \
+        typename VertexData,       \
+        typename EdgeIdentifier,   \
+        typename EdgeData>
+
 int sourceOf(int edgeIdentifier);
 
 int targetOf(int edgeIdentifier);
 
 int reverseEdgeOf(int edgeIdentifier);
 
-template<
-    typename VertexIdentifier,
-    typename VertexData,
-    typename EdgeIdentifier,
-    typename EdgeData>
+GP_GRAPH_TEMPLATE
 void removeEdge(
     DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
                    graph,
@@ -33,11 +36,7 @@ void removeEdge(
     (void)hasSucceeded2;
 }
 
-template<
-    typename VertexIdentifier,
-    typename VertexData,
-    typename EdgeIdentifier,
-    typename EdgeData>
+GP_GRAPH_TEMPLATE
 VertexIdentifier takeStep(
     VertexIdentifier             sourceVertex,
     std::vector<EdgeIdentifier>& eulerCircuit,
@@ -65,11 +64,7 @@ VertexIdentifier takeStep(
     return targetOf(firstOutboundEdgeIdentifier);
 }
 
-template<
-    typename VertexIdentifier,
-    typename VertexData,
-    typename EdgeIdentifier,
-    typename EdgeData>
+GP_GRAPH_TEMPLATE
 std::vector<EdgeIdentifier> createCircuit(
     VertexIdentifier startVertex,
     DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
@@ -86,11 +81,7 @@ std::vector<EdgeIdentifier> createCircuit(
     return eulerCircuit;
 }
 
-template<
-    typename VertexIdentifier,
-    typename VertexData,
-    typename EdgeIdentifier,
-    typename EdgeData>
+GP_GRAPH_TEMPLATE
 VertexIdentifier chooseNextVertex(
     const DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
                                    graph,
@@ -138,12 +129,8 @@ void insertInto(
         subCircuit.end());
 }
 
-template<
-    typename VertexIdentifier,
-    typename VertexData,
-    typename EdgeIdentifier,
-    typename EdgeData>
-std::vector<EdgeIdentifier> createEularianTour(
+GP_GRAPH_TEMPLATE
+void createEularianTour(
     DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
                                    graph,
     std::vector<EdgeIdentifier>&   eulerCircuit,
@@ -155,22 +142,18 @@ std::vector<EdgeIdentifier> createEularianTour(
 
     const std::vector<edge_type>& edges{graph.edges()};
 
-    if (edges.empty()) { return eulerCircuit; }
+    if (edges.empty()) { return; }
 
     const VertexIdentifier chosenVertex{chooseNextVertex(graph, openList)};
     const std::vector<EdgeIdentifier> subCircuit{
         createCircuit(chosenVertex, graph, openList)};
     insertInto(eulerCircuit, subCircuit);
 
-    return createEularianTour(graph, eulerCircuit, openList);
+    createEularianTour(graph, eulerCircuit, openList);
 }
 } // namespace detail
 
-template<
-    typename VertexIdentifier,
-    typename VertexData,
-    typename EdgeIdentifier,
-    typename EdgeData>
+GP_GRAPH_TEMPLATE
 PL_NODISCARD std::vector<EdgeIdentifier> algorithm(
     DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData> graph)
 {
@@ -190,8 +173,12 @@ PL_NODISCARD std::vector<EdgeIdentifier> algorithm(
     std::vector<EdgeIdentifier> eulerCircuit{
         detail::createCircuit(startVertex, graph, openList)};
 
-    return detail::createEularianTour(graph, eulerCircuit, openList);
+    detail::createEularianTour(graph, eulerCircuit, openList);
+
+    return eulerCircuit;
 }
+
+#undef GP_GRAPH_TEMPLATE
 } // namespace hierholzer
 } // namespace gp
 #endif // INCG_GP_HIERHOLZER_ALGORITHM_HPP
