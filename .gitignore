@@ -138,4 +138,10 @@ $RECYCLE.BIN/
 # Custom
 # Temporary files
 temp/*
+
+# Build artifacts
+build/*
+
+# Google Test
+googletest
 # End of Custom
