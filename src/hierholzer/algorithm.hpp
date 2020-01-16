@@ -1,9 +1,8 @@
 #ifndef INCG_GP_HIERHOLZER_ALGORITHM_HPP
 #define INCG_GP_HIERHOLZER_ALGORITHM_HPP
-#include "../directed_graph.hpp"         // gp::DirectedGraph
-#include <pl/algo/ranged_algorithms.hpp> // pl::algo::find_if
-#include <pl/annotations.hpp>            // PL_NODISCARD
-#include <vector>                        // std::vector
+#include "../directed_graph.hpp" // gp::DirectedGraph
+#include <pl/annotations.hpp>    // PL_NODISCARD
+#include <vector>                // std::vector
 
 namespace gp {
 namespace hierholzer {
@@ -124,18 +123,21 @@ void insertInto(
     const EdgeIdentifier   first{subCircuit.front()};
     const VertexIdentifier firstSource{sourceOf(first)};
 
-    const typename std::vector<EdgeIdentifier>::const_iterator position{
-        pl::algo::find_if(
-            eularianCircuit, [firstSource](EdgeIdentifier edgeIdentifier) {
-                const int currentTarget{targetOf(edgeIdentifier)};
-                return currentTarget == firstSource;
-            })};
+    typename std::vector<EdgeIdentifier>::const_iterator r{
+        eularianCircuit.end()};
 
-    assert(
-        (position == eularianCircuit.end())
-        and "Failure to find in insertInto!");
+    for (auto it = eularianCircuit.begin(); it != eularianCircuit.end(); ++it) {
+        const EdgeIdentifier current{*it};
 
-    eularianCircuit.insert(position + 1, subCircuit.begin(), subCircuit.end());
+        if (targetOf(current) == firstSource) {
+            r = it;
+            break;
+        }
+    }
+
+    assert((r != eularianCircuit.end()) and "Failure to find in insertInto!");
+
+    eularianCircuit.insert(r + 1, subCircuit.begin(), subCircuit.end());
 }
 
 template<
