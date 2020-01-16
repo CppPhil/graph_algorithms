@@ -12,6 +12,10 @@ readonly PREV_DIR=$(pwd)
 
 cd $DIR
 
+rm -rf ./temp
+
+mkdir ./temp
+
 # Run the executable
 $BUILD_DIR/src/executable
 
