@@ -17,39 +17,18 @@ template<
     typename VertexData,
     typename EdgeIdentifier,
     typename EdgeData>
-std::vector<EdgeIdentifier> findCircuit(
-    VertexIdentifier startVertex,
-    DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
-                                   graph,
-    std::vector<VertexIdentifier>& toExplore)
-{
-    std::vector<EdgeIdentifier> eularianCircuit{};
-    VertexIdentifier            currentVertex{startVertex};
-
-    do {
-        currentVertex = traverseNextEdge(
-            currentVertex, eularianCircuit, graph, toExplore);
-    } while (currentVertex != startVertex);
-
-    return eularianCircuit;
-}
-
-template<
-    typename VertexIdentifier,
-    typename VertexData,
-    typename EdgeIdentifier,
-    typename EdgeData>
 void removeEdge(
     DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
                    graph,
     EdgeIdentifier edge)
 {
-    const bool [[maybe_unused]] hasSucceeded{graph.removeEdge(edge)};
+    const bool hasSucceeded{graph.removeEdge(edge)};
     assert(hasSucceeded and "Couldn't remove edge from graph");
+    (void)hasSucceeded;
 
-    const bool
-        [[maybe_unused]] hasSucceeded2{graph.removeEdge(reverseEdgeOf(edge))};
+    const bool hasSucceeded2{graph.removeEdge(reverseEdgeOf(edge))};
     assert(hasSucceeded2 and "Couldn't remove reverse edge from graph");
+    (void)hasSucceeded2;
 }
 
 template<
@@ -89,26 +68,21 @@ template<
     typename VertexData,
     typename EdgeIdentifier,
     typename EdgeData>
-std::vector<EdgeIdentifier> createEularianTour(
+std::vector<EdgeIdentifier> findCircuit(
+    VertexIdentifier startVertex,
     DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
                                    graph,
-    std::vector<EdgeIdentifier>&   eularianCircuit,
     std::vector<VertexIdentifier>& toExplore)
 {
-    using graph_type
-        = DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>;
-    using edge_type = typename graph_type::edge_type;
+    std::vector<EdgeIdentifier> eularianCircuit{};
+    VertexIdentifier            currentVertex{startVertex};
 
-    const std::vector<edge_type>& edges{graph.edges()};
+    do {
+        currentVertex = traverseNextEdge(
+            currentVertex, eularianCircuit, graph, toExplore);
+    } while (currentVertex != startVertex);
 
-    if (edges.empty()) { return eularianCircuit; }
-
-    const VertexIdentifier vertexPicked{pickVertex(graph, toExplore)};
-    const std::vector<EdgeIdentifier> subCircuit{
-        findCircuit(vertexPicked, graph, toExplore)};
-    insertInto(eularianCircuit, subCircuit);
-
-    return createEularianTour(graph, eularianCircuit, toExplore);
+    return eularianCircuit;
 }
 
 template<
@@ -127,7 +101,7 @@ VertexIdentifier pickVertex(
 
     const VertexIdentifier              vertex{toExplore.front()};
     const std::vector<const edge_type*> outboundEdges{
-        graph.outboundEdges(sourceVertex)};
+        graph.outboundEdges(vertex)};
 
     if (outboundEdges.empty()) {
         toExplore.erase(toExplore.begin());
@@ -149,7 +123,7 @@ void insertInto(
         pl::algo::find(eularianCircuit, first)};
 
     assert(
-        (position != eularianCircuit.end())
+        (position == eularianCircuit.end())
         and "Failure to find in insertInto!");
 
     const typename std::vector<EdgeIdentifier>::const_iterator insertionPoint{
@@ -157,6 +131,33 @@ void insertInto(
 
     eularianCircuit.insert(
         insertionPoint, subCircuit.begin(), subCircuit.end());
+}
+
+template<
+    typename VertexIdentifier,
+    typename VertexData,
+    typename EdgeIdentifier,
+    typename EdgeData>
+std::vector<EdgeIdentifier> createEularianTour(
+    DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
+                                   graph,
+    std::vector<EdgeIdentifier>&   eularianCircuit,
+    std::vector<VertexIdentifier>& toExplore)
+{
+    using graph_type
+        = DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>;
+    using edge_type = typename graph_type::edge_type;
+
+    const std::vector<edge_type>& edges{graph.edges()};
+
+    if (edges.empty()) { return eularianCircuit; }
+
+    const VertexIdentifier vertexPicked{pickVertex(graph, toExplore)};
+    const std::vector<EdgeIdentifier> subCircuit{
+        findCircuit(vertexPicked, graph, toExplore)};
+    insertInto(eularianCircuit, subCircuit);
+
+    return createEularianTour(graph, eularianCircuit, toExplore);
 }
 } // namespace detail
 
@@ -168,10 +169,6 @@ template<
 PL_NODISCARD std::vector<EdgeIdentifier> algorithm(
     DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData> graph)
 {
-    using graph_type
-        = DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>;
-    using vertex_type = typename graph_type::vertex_type;
-
     static_assert(
         std::is_same_v<EdgeIdentifier, int>,
         "EdgeIdentifier should be an alias of type int!");
@@ -182,7 +179,7 @@ PL_NODISCARD std::vector<EdgeIdentifier> algorithm(
 
     assert(graph.hasVertices() and "graph had no vertices!");
 
-    const VertexIdentifier        startVertex{graph.vertices().front()};
+    const VertexIdentifier startVertex{graph.vertices().front().identifier()};
     std::vector<VertexIdentifier> toExplore{};
 
     std::vector<EdgeIdentifier> eularianCircuit{
