@@ -1,2 +1,50 @@
+Update submodules of projects
+
 Fix the Hierholzer that might be broken.
+ + Pick start vertex
+ + toExplore = []
+ + eularianCircuit = findCircuit(startVertex, graph, toExplore)
+ + Result = createEularianTour(graph, eularianCircuit, toExplore)
+ + return result
+
+ findCircuit(startVertex, graph, toExplore)
+ + eularianCircuit = []
+ + currentVertex = startVertex
+ + do {
+ +     currentVertex = traverseNextEdge(currentVertex, eularianCircuit, graph, toExplore);
+ + } while (currentVertex != startVertex);
+
+ traverseNextEdge(sourceVertex, eularianCircuit, graph, toExplore)
+ + OutboundEdges = getOutboundEdges();
+ + targetVertex = first(OutboundEdges);
+ + eularianCircuit.append(sourceVertex, targetVertex);
+ + if (OutboundEdges.size() > 1U) {
+ +     toExplore.append(sourceVertex);
+ + }
+ + graph.deleteEdge(sourceVertex, targetVertex);
+ + return targetVertex;
+
+ createEularianTour(graph, eularianCircuit, toExplore)
+ + edges = graph.getEdges();
+ + if (edges.isEmpty()) {
+ +     return eularianCircuit;
+ + }
+ + vertexPicked = pickVertex(graph, toExplore);
+ + subCircuit = findCircuit(vertexPicked, graph, toExplore);
+ + insertInto(eularianCircuit, subCircuit);
+ + return createEularianTour(graph, eularianCircuit, toExplore)
+
+ pickVertex(graph, toExplore)
+  -> pick the top one 
+   -> if that's got no directly reachable vertices
+    -> delete it from 'toExplore'
+    -> and pick the next one
+  -> repeat until done.
+
+ insertInto(eularianCircuit, subCircuit)
+ + find position of head(subCircuit) in eularianCircuit
+ + insert subCircuit after that
+ 
+rename all the things
+
 

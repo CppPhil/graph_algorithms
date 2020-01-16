@@ -2,117 +2,152 @@
 #define INCG_GP_HIERHOLZER_ALGORITHM_HPP
 #include "../directed_graph.hpp" // gp::DirectedGraph
 #include <pl/annotations.hpp>    // PL_NODISCARD
-#include <tl/optional.hpp>       // tl::optional
+#include <vector> // std::vector
+#include <pl/algo/ranged_algorithms.hpp> // pl::algo::find
 
-// TODO: NOTE: This Hierholzer might be broken
 namespace gp {
 namespace hierholzer {
 namespace detail {
-template<
-    typename VertexIdentifier,
-    typename VertexData,
-    typename EdgeIdentifier,
-    typename EdgeData>
-PL_NODISCARD tl::optional<VertexIdentifier> pickVertex(
-    const std::vector<EdgeIdentifier>& result,
-    const DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
-        graph)
-{
-    using namespace pl::literals::integer_literals;
+int targetOf(int edgeIdentifier);
 
-    const auto target
-        = [](EdgeIdentifier identifier) { return identifier % 10; };
-
-    for (EdgeIdentifier edge : result) {
-        const VertexIdentifier dst{target(edge)};
-
-        if (graph.outboundDegree(dst) > 0_zu) { return dst; }
-    }
-
-    return tl::nullopt;
-}
-
-template<typename EdgeIdentifier>
-typename std::vector<EdgeIdentifier>::const_iterator insertionPoint(
-    const std::vector<EdgeIdentifier>& result,
-    const std::vector<EdgeIdentifier>& subCircuit)
-{
-    using iterator = typename std::vector<EdgeIdentifier>::const_iterator;
-
-    const auto source
-        = [](EdgeIdentifier identifier) { return identifier / 10; };
-    const auto target
-        = [](EdgeIdentifier identifier) { return identifier % 10; };
-    const EdgeIdentifier firstSource{source(subCircuit.front())};
-    const iterator       it{pl::algo::find_if(
-        result, [firstSource, &target](EdgeIdentifier curEdge) {
-            return target(curEdge) == firstSource;
-        })};
-
-    assert((it != result.end()) and "iterator was invalid!");
-
-    return it + 1;
-}
+int reverseEdgeOf(int edgeIdentifier);
 
 template<
     typename VertexIdentifier,
     typename VertexData,
     typename EdgeIdentifier,
     typename EdgeData>
-PL_NODISCARD std::vector<EdgeIdentifier> algorithm(
+std::vector<EdgeIdentifier> findCircuit(
     VertexIdentifier startVertex,
-    DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
-        graph)
+    DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData> &graph,
+    std::vector<VertexIdentifier>& toExplore)
+{
+    std::vector<EdgeIdentifier> eularianCircuit{};
+    VertexIdentifier currentVertex{startVertex};
+
+    do {
+        currentVertex = traverseNextEdge(currentVertex, eularianCircuit, graph, toExplore);
+    } while (currentVertex != startVertex);
+
+    return eularianCircuit;
+}
+
+template<
+    typename VertexIdentifier,
+    typename VertexData,
+    typename EdgeIdentifier,
+    typename EdgeData>
+void removeEdge(
+    DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData> &graph,
+    EdgeIdentifier edge
+) {
+    const bool [[maybe_unused]] hasSucceeded{graph.removeEdge(edge)};
+    assert(hasSucceeded and "Couldn't remove edge from graph");
+
+    const bool [[maybe_unused]] hasSucceeded2{graph.removeEdge(reverseEdgeOf(edge))};
+    assert(hasSucceeded2 and "Couldn't remove reverse edge from graph");
+}
+
+template<
+    typename VertexIdentifier,
+    typename VertexData,
+    typename EdgeIdentifier,
+    typename EdgeData>
+VertexIdentifier traverseNextEdge(
+    VertexIdentifier sourceVertex,
+    std::vector<EdgeIdentifier>& eularianCircuit,
+    DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData> &graph,
+    std::vector<VertexIdentifier>& toExplore)
 {
     using graph_type
         = DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>;
     using edge_type = typename graph_type::edge_type;
 
-    std::vector<EdgeIdentifier> result{};
-    VertexIdentifier            currentVertex{startVertex};
+    const std::vector<const edge_type*> outboundEdges{graph.outboundEdges(sourceVertex)};
+    assert((not outboundEdges.empty()) and "Vertex has no outbound edges!");
+    const edge_type * const firstOutboundEdge{outboundEdges.front()};
+    const EdgeIdentifier firstOutboundEdgeIdentifier{firstOutboundEdge->identifier()};
 
-    do {
-        const std::vector<const edge_type*> outbounds{
-            graph.outboundEdges(currentVertex)};
-        assert((not outbounds.empty()) and "vertex had no outbound edges!");
+    eularianCircuit.push_back(firstOutboundEdgeIdentifier);
 
-        const edge_type* const edgeToTake{outbounds.front()};
-        currentVertex = edgeToTake->target();
-        const EdgeIdentifier edgeToTakeIdentifier{edgeToTake->identifier()};
-        result.push_back(edgeToTakeIdentifier);
-        bool errC{graph.removeEdge(edgeToTakeIdentifier)};
-        assert(errC and "Couldn't remove edge from graph!");
-
-        // Special for C++: remove reverse edge.
-        const auto swapTwoDecimalDigits = [](EdgeIdentifier i) {
-            static_assert(
-                std::is_same_v<EdgeIdentifier, int>,
-                "EdgeIdentifier should be an alias of type int!");
-            return ((i % 10) * 10) + (i / 10);
-        };
-        errC = graph.removeEdge(swapTwoDecimalDigits(edgeToTakeIdentifier));
-        assert(errC and "Couldn't remove REVERSE edge from graph!");
-    } while (currentVertex != startVertex);
-
-    for (tl::optional<VertexIdentifier> pickedVertex{tl::nullopt};
-         (pickedVertex = ::gp::hierholzer::detail::pickVertex(result, graph))
-             .has_value();) {
-        const std::vector<EdgeIdentifier> subCircuit{
-            ::gp::hierholzer::detail::algorithm(pickedVertex.value(), graph)};
-
-        if (subCircuit.empty()) {
-            std::cerr << "file: " << __FILE__
-                      << " function: " << PL_CURRENT_FUNCTION << ": "
-                      << "subCircuit was empty!\n";
-        }
-        else {
-            const typename std::vector<EdgeIdentifier>::const_iterator it{
-                ::gp::hierholzer::detail::insertionPoint(result, subCircuit)};
-            result.insert(it, subCircuit.begin(), subCircuit.end());
-        }
+    if (outboundEdges.size() > 1U) {
+        toExplore.push_back(sourceVertex);
     }
 
-    return result;
+    removeEdge(graph, firstOutboundEdgeIdentifier);
+
+    return targetOf(firstOutboundEdgeIdentifier);
+}
+
+template<
+    typename VertexIdentifier,
+    typename VertexData,
+    typename EdgeIdentifier,
+    typename EdgeData>
+std::vector<EdgeIdentifier> createEularianTour(
+    DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>& graph,
+    std::vector<EdgeIdentifier>& eularianCircuit,
+    std::vector<VertexIdentifier>& toExplore
+) {
+    using graph_type
+        = DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>;
+    using edge_type = typename graph_type::edge_type;
+
+    const std::vector<edge_type>& edges{graph.edges()};
+
+    if (edges.empty()) {
+        return eularianCircuit;
+    }
+
+    const VertexIdentifier vertexPicked{pickVertex(graph, toExplore)};
+    const std::vector<EdgeIdentifier> subCircuit{findCircuit(vertexPicked, graph, toExplore)};
+    insertInto(eularianCircuit, subCircuit);
+
+    return createEularianTour(graph, eularianCircuit, toExplore);
+}
+
+template<
+    typename VertexIdentifier,
+    typename VertexData,
+    typename EdgeIdentifier,
+    typename EdgeData>
+VertexIdentifier pickVertex(
+    const DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>& graph,
+    std::vector<VertexIdentifier>& toExplore
+) {
+    using graph_type
+        = DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>;
+    using edge_type = typename graph_type::edge_type;
+
+    const VertexIdentifier vertex{toExplore.front()};
+    const std::vector<const edge_type*> outboundEdges{graph.outboundEdges(sourceVertex)};
+    
+    if (outboundEdges.empty()) {
+        toExplore.erase(toExplore.begin());
+        return pickVertex(graph, toExplore);
+    } else {
+        return vertex;
+    }
+}
+
+template <typename EdgeIdentifier>
+void insertInto(
+    std::vector<EdgeIdentifier>& eularianCircuit, 
+    const std::vector<EdgeIdentifier>& subCircuit) 
+{
+    const EdgeIdentifier first{subCircuit.front()};
+
+    const typename std::vector<EdgeIdentifier>::const_iterator position{
+        pl::algo::find(eularianCircuit, first)
+    };
+
+    assert((position != eularianCircuit.end()) and "Failure to find in insertInto!");
+
+    const typename std::vector<EdgeIdentifier>::const_iterator insertionPoint{
+        position + 1
+    };
+
+    eularianCircuit.insert(insertionPoint, subCircuit.begin(), subCircuit.end());    
 }
 } // namespace detail
 
@@ -128,12 +163,22 @@ PL_NODISCARD std::vector<EdgeIdentifier> algorithm(
         = DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>;
     using vertex_type = typename graph_type::vertex_type;
 
+    static_assert(
+                std::is_same_v<EdgeIdentifier, int>,
+                "EdgeIdentifier should be an alias of type int!");
+
+    static_assert(std::is_same_v<VertexIdentifier, EdgeIdentifier>, "VertexIdentifier and EdgeIdentifier aren't the same type!");
+
     assert(graph.hasVertices() and "graph had no vertices!");
 
-    const std::vector<vertex_type>& vertices{graph.vertices()};
-    const VertexIdentifier&         startVertex{vertices.front().identifier()};
+    const VertexIdentifier startVertex{graph.vertices().front()};
+    std::vector<VertexIdentifier> toExplore{};
 
-    return ::gp::hierholzer::detail::algorithm(startVertex, graph);
+    std::vector<EdgeIdentifier> eularianCircuit{
+        detail::findCircuit(startVertex, graph, toExplore)
+    };
+
+    return detail::createEularianTour(graph, eularianCircuit, toExplore);    
 }
 } // namespace hierholzer
 } // namespace gp

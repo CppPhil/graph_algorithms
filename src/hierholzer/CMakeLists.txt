@@ -2,6 +2,7 @@
 add_library(
     hierholzer_lib
     STATIC
+    algorithm.cpp
     algorithm_test_graph.cpp
     export_graph.cpp
 )
