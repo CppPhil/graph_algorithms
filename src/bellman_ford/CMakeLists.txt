@@ -22,13 +22,13 @@ target_include_directories(
 target_include_directories(
     bf_lib
     PRIVATE
-        ${CMAKE_BINARY_DIR}/../../deps/philslib/include
+        ${CMAKE_BINARY_DIR}/../deps/philslib/include
 )
 
 target_include_directories(
     bf_lib
     PRIVATE
-        ${CMAKE_BINARY_DIR}/../../deps/optional/include
+        ${CMAKE_BINARY_DIR}/../deps/optional/include
 )
 
 set_target_properties(
