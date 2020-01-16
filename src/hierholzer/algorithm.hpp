@@ -4,6 +4,7 @@
 #include <pl/annotations.hpp>    // PL_NODISCARD
 #include <tl/optional.hpp>       // tl::optional
 
+// TODO: NOTE: This Hierholzer might be broken
 namespace gp {
 namespace hierholzer {
 namespace detail {
