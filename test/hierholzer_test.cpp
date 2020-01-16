@@ -8,12 +8,12 @@ using namespace hierholzer::algorithm_test_graph_types;
 class HierholzerTest : public ::testing::Test {
 protected:
     const graph_type graph{hierholzer::algorithmTestGraph()};
-
-    const std::vector<edge_identifier> result{hierholzer::algorithm(graph)};
 };
 
 TEST_F(HierholzerTest, isCircle)
 {
+    const std::vector<edge_identifier> result{hierholzer::algorithm(graph)};
+
     ASSERT_FALSE(result.empty());
 
     const edge_identifier& first{result.front()};
@@ -30,7 +30,9 @@ TEST_F(HierholzerTest, isCircle)
 
 TEST_F(HierholzerTest, hasAllEdges)
 {
-    const auto contains = [this](int v1, int v2) {
+    const std::vector<edge_identifier> result{hierholzer::algorithm(graph)};
+
+    const auto contains = [&result](int v1, int v2) {
         return ::gp::contains(result, (v1 * 10) + v2)
                or ::gp::contains(result, (v2 * 10) + v1);
     };
@@ -51,6 +53,8 @@ TEST_F(HierholzerTest, hasAllEdges)
 
 TEST_F(HierholzerTest, isTraversable)
 {
+    const std::vector<edge_identifier> result{hierholzer::algorithm(graph)};
+
     ASSERT_FALSE(result.empty());
 
     vertex_identifier previousTarget{};
