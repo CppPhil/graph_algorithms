@@ -3,10 +3,7 @@
 namespace gp {
 namespace hierholzer {
 namespace detail {
-int targetOf(int edgeIdentifier)
-{
-    return edgeIdentifier % 10;
-}
+int targetOf(int edgeIdentifier) { return edgeIdentifier % 10; }
 
 int reverseEdgeOf(int edgeIdentifier)
 {
@@ -15,4 +12,3 @@ int reverseEdgeOf(int edgeIdentifier)
 } // namespace detail
 } // namespace hierholzer
 } // namespace gp
-
