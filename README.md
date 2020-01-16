@@ -5,7 +5,8 @@ This project implements various graph algorithms in C++.
 - GNU/Linux  
 
 ## Prerequisites
-- A modern GNU C++ Compiler (g++)  
+- gcc-8  
+- g++-8  
 - A recent release of CMake  
 
 ## Cloning

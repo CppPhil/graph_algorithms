@@ -9,10 +9,10 @@ readonly DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 readonly BUILD_DIR=$DIR/build
 
 # The C compiler to use
-readonly C_COMPILER="gcc"
+readonly C_COMPILER="gcc-8"
 
 # The C++ compiler to use
-readonly CXX_COMPILER="g++"
+readonly CXX_COMPILER="g++-8"
 
 if [ "$#" -ne 1 ]; then
     echo "Illegal number of command line arguments. Enter Debug or Release as the first command line argument."
