@@ -8,7 +8,7 @@ readonly DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 # Directories
 readonly SRC_DIR=$DIR/src
 readonly TEST_DIR=$DIR/test
-readonly CLANG_FMT_DIR=$DIR/../deps/clang-format
+readonly CLANG_FMT_DIR=$DIR/deps/clang-format
 
 # files
 readonly FMT_SH=$CLANG_FMT_DIR/fmt.sh
