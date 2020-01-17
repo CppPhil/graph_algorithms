@@ -130,7 +130,7 @@ void insertInto(
 }
 
 GP_GRAPH_TEMPLATE
-void createEularianTour(
+void createEulerTour(
     DirectedGraph<VertexIdentifier, VertexData, EdgeIdentifier, EdgeData>&
                                    graph,
     std::vector<EdgeIdentifier>&   eulerCircuit,
@@ -149,7 +149,7 @@ void createEularianTour(
         createCircuit(chosenVertex, graph, openList)};
     insertInto(eulerCircuit, subCircuit);
 
-    createEularianTour(graph, eulerCircuit, openList);
+    createEulerTour(graph, eulerCircuit, openList);
 }
 } // namespace detail
 
@@ -173,7 +173,7 @@ PL_NODISCARD std::vector<EdgeIdentifier> algorithm(
     std::vector<EdgeIdentifier> eulerCircuit{
         detail::createCircuit(startVertex, graph, openList)};
 
-    detail::createEularianTour(graph, eulerCircuit, openList);
+    detail::createEulerTour(graph, eulerCircuit, openList);
 
     return eulerCircuit;
 }
